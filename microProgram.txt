@@ -1,0 +1,236 @@
+!Provera starta! 
+l0: br (if !START then l0); 
+!Citanje instrukcije!
+PCout1, MOST1_2, ldMAR, incPC; 
+l3: eMAR, rdCPU, br (if !fcCPU then l3);
+MDRout1, ldIR0;
+br (if !gropr then l7);
+stPRCOD, br LINTR;
+l7: br (if l1 then lEXE);
+PCout1, MOST1_2, ldMAR, incPC;
+lA: eMAR, rdCPU, br (if !fcCPU then lA);
+MDRout1, MOST1_3, ldIR1, ldGPRAR;
+br (if !gradr then lE);
+stPRADR, br LINTR;
+lE: br (if L2_BRN then lEXE);
+br (if L2_ADR then LADR);
+PCout1, MOST1_2, ldMAR, incPC;
+l12: eMAR, rdCPU, br (if !fcCPU then l12);
+MDRout1, ldIR2, br(if L3_JMP then lEXE);
+PCout1, MOST1_2, ldMAR, incPC;
+l17: eMAR, rdCPU, br (if !fcCPU then l17);
+MDRout1, ldIR3;
+!Adresiranja!
+LADR: bradr
+!shortimmed!
+ldBB, IRPOMout3, MOST3_2, MOST2_1, br lEXE;
+!Regdir!
+br (if WRITES then lEXE);
+GPRout1, ldBB, br lEXE;
+!Regind! 
+GPRout1, MOST1_2, ldMAR, ldBW, br (if WRITES then lEXE);
+br LREAD;
+!predec!
+GPRout1, ldAW, MOST1_2;
+AWout3, ALUout1, dec, ldAW, MOST1_2;
+AWout3, ALUout1, dec, ldAW, MOST1_2;
+AWout3, MOST3_2, ldMAR, ldBW, wrGPR, br (if WRITES then lEXE);
+br LREAD;
+!Memdir!
+IRDAout3, MOST3_2, ldMAR, ldBW, br (if WRITES then lEXE);
+br LREAD;
+!Memind!
+IRDAout3, MOST3_2, ldMAR;
+l24: eMAR, rdCPU, br (if !fcCPU then l24);
+MDRout1, ldDWL, incMAR;
+l27: eMAR, rdCPU, br (if !fcCPU then l27);
+MDRout1, ldDWH;
+DWout2, ldMAR, ldBW, br (if WRITES then lEXE);
+br LREAD;
+!immed!
+IRDAout3, MOST3_2, MOST2_1, ldBB, br lEXE;
+!BXPOSTINC!
+ldSP;
+decSP;
+decSP;
+decSP;
+ldGPRAR, SPout2, MOST2_1;
+GPRout1, ldCW, MOST1_2, incGPRAR;
+GPRout1, CWout3, ADDout2, ldMAR, ldBW;
+GPRout1, ldSP, MOST1_3;
+incSP;
+incSP;
+SPout2, MOST2_1, MOST1_3, wrGPR, br (if WRITES then lEXE);
+!Citanje operanda!
+LREAD: eMAR, rdCPU, br (if !fcCPU then LREAD);
+MDRout1, ldDWL, incMAR;
+l33: eMAR, rdCPU, br (if !fcCPU then l33);
+MDRout1, ldDWH, incMAR;
+DWout2, MOST2_1, ldBB;
+!Izvrsavanje instrukcije!
+lEXE: bropr;
+!Nop!
+br LINTR;
+!Halt!
+clSTART, br l0;
+!Intd!
+clPSWI, br LINTR;
+!Inte!
+stPSWI, br LINTR;
+!LD! 
+BBout2, MOST2_1, ldAB;
+ldN, ldZ, ldC, ldV, br LINTR;
+!ST!
+lStore: br (if regdir then l4C);
+ABout3, mxMDR, ldMDR, MOST3_2, ldAW;
+l4A: eMAR, eMDR, wrCPU, br (if !fcCPU then l4A);
+AWHout3, mxMDR, ldMDR, incMAR;
+l4B: eMAR, eMDR, wrCPU, br (if !fcCPU then l4B);
+br LINTR;
+l4C: ABout3, wrGPR, br LINTR;
+!LEN!
+ldSP, ALUout1, MOST1_3;
+l4E: eMAR, rdCPU, br (if !fcCPU then l4E);
+ldAB, MDRout1, incMAR;
+br (if Z then lLENEND)
+incSP, br l4E;
+lLENEND: ldAB, SPout2, MOST2_1;
+ldN, ldZ, ldC, ldV, br LINTR;
+!PUSH!
+ldGPRAR, dec, ALUout1
+ldSP, GPRout1, MOST1_3
+ldAW, ABout3, MOST3_2
+ldMDR, AWout3, mxMDR, SPout2, incSP, ldMAR
+l58: eMAR, eMDR, wrCPU, br (if !fcCPU then l58);
+ldMDR, AWHout3, mxMDR, SPout2, ldMAR, incSP;
+l59: eMAR, eMDR, wrCPU, br (if !fcCPU then l59);
+wrGPR, SPout2, MOST2_1, MOST1_3, br lINTR;
+!POP!
+ldGPRAR, dec, ALUout1
+ldMAR, ldSP, GPRout1, MOST2_1, MOST1_3;
+decSP
+l66: eMAR, rdCPU, br (if !fcCPU then l66);
+ldMAR, SPout2, MDRout1, ldDWH, decSP
+l67: SPout2, wrGPR, MOST2_1, MOST1_3, eMAR, rdCPU, br (if !fcCPU then l67);
+MDRout1, ldDWL;
+DWout2, MOST2_1, ldAB;
+ldN, ldZ, ldC, ldV, br LINTR;
+!INC!
+BBout2, ldSP, MOST2_1, MOST1_3, br (if regdir then lincregdir);
+incSP, BWout2, ldMAR;
+mxMDR, ldMDR, SPout2, MOST2_1, MOST1_3, ldAW;
+l6E: eMAR, eMDR, wrCPU, br (if !fcCPU then l6E);
+incMAR, mxMDR, ldMDR, AWHout3;
+l70: eMAR, eMDR, wrCPU, br (if !fcCPU then l70);
+br LINTR;
+lincregdir: incSP;
+wrGPR, SPout2, MOST2_1, MOST1_3;
+br LINTR;
+!Stivtp!
+ABout3, ldIVTP, br LINTR;
+!Add!
+BBout2, ABout3, add, ALUout1, ldAB, ldC, ldV;
+ldN, ldZ, br LINTR;
+!Sub!
+BBout2, ABout3, sub, ALUout1, ldAB, ldC, ldV;
+ldN, ldZ, br LINTR;
+!CMP!
+ldAW, ABout3, MOST3_2; // zarad lakseg setovanja svih PSW bitova samo cuvam u AW i radim obican sub
+BBout2, ABout3, sub, ALUout1, ldAB, ldC, ldV;
+ldN, ldZ, AWout3, ldAB, MOST3_2, MOST2_1, br LINTR;
+!MAX!
+ldAW, ABout3, MOST3_2;
+BBout2, ABout3, sub, ALUout1, ldAB, ldC, ldV;
+ldN, ldZ;
+br (if LESS then l75);
+AWout3, ldAB, MOST3_2, MOST2_1;
+br llogsetpsw;
+l75: ldAB, BBout2, MOST2_1;
+br llogsetpsw;
+!And!
+BBout2, ABout3, and, ALUout1, ldAB, br llogsetpsw;
+!Or!
+BBout2, ABout3, or, ALUout1, ldAB, br llogsetpsw;
+!Xor!
+BBout2, ABout3, xor, ALUout1, ldAB;
+llogsetpsw: ldN, ldZ, ldC, ldV, br LINTR;
+!NEG!
+BBout2, sub, ALUout1, ldAB, ldC, ldV;
+ldN, ldZ, br LINTR;
+!Asr, Lsr, Ror i Rorc!
+shr, ldC;
+ldN, ldZ, ldV, br LINTR;
+!Asl, Lsl, Rol i Rolc!
+shl, ldC;
+ldN, ldZ, ldV, br LINTR;
+!CLR xor eax eax eax!
+ABout3, MOST3_2, xor, ALUout1, ldAB;
+ldN, ldZ, ldC, ldV, br LINTR;
+!Beql,..., Blsseu!
+IRBRout3, br (if !brpom then LINTR);
+PCout1, IRPOMout3, ADDout2, ldPC, br LINTR;
+!Jmp!
+IRJAout2, ldPC, br LINTR;
+!Int!
+stPRINS, br LINTR;
+!Jsr!
+ldGPRAR, ALUout1, dec;
+ldMAR, ldSP, GPRout1, MOST1_3, MOST3_2
+ldMDR, PCLout3, mxMDR, incSP, incMAR
+l92: eMAR, eMDR, wrCPU, br (if !fcCPU then l92);
+ldMDR, PCHout3, mxMDR, incSP, incMAR
+l94: SPout2, wrGPR, MOST2_1, MOST1_3, eMAR, eMDR, wrCPU, br (if !fcCPU then l94);
+IRJAout2, ldPC, br LINTR;
+!RTS!
+lRTS: ldGPRAR, dec, ALUout1
+ldMAR, ldSP, GPRout1, MOST1_3, MOST3_2
+decSP
+l98: eMAR, rdCPU, br (if !fcCPU then l98);
+ldMAR, SPout2, MDRout1, ldDWH, decSP
+l99: SPout2, wrGPR, MOST2_1, MOST1_3, eMAR, rdCPU, br (if !fcCPU then l99);
+MDRout1, ldDWL;
+DWout2, ldPC, br lINTR;
+!RTI!
+ldGPRAR, dec, ALUout1
+ldMAR, ldSP, GPRout1, MOST1_3, MOST3_2
+decSP
+lA0: eMAR, rdCPU, br (if !fcCPU then lA0);
+ldMAR, SPout2, MDRout1, ldPSWH, decSP
+lA2: SPout2, wrGPR, MOST2_1, MOST1_3, eMAR, rdCPU, br (if !fcCPU then lA2);
+MDRout1, ldPSWL, br lRTS;
+!Opsluzivanje prekida!
+LINTR: br (if !prekid then l0);
+!Cuvanje konteksta procesora!
+dec, ALUout1, ldGPRAR;
+GPRout1, ldSP, MOST1_3;
+incSP;
+SPout2, ldMAR, PCLout3, mxMDR, ldMDR;
+lAD: eMAR, eMDR, wrCPU, br (if !fcCPU then lAD);
+incSP;
+SPout2, ldMAR, PCHout3, mxMDR, ldMDR;
+lB1: eMAR, eMDR, wrCPU, br (if !fcCPU then lB1);
+incSP;
+SPout2, ldMAR, PSWLout3, mxMDR, ldMDR;
+lB5: eMAR, eMDR, wrCPU, br (if !fcCPU then lB5);
+incSP;
+SPout2, ldMAR, PSWHout3, mxMDR, ldMDR;
+lB9: eMAR, eMDR, wrCPU, br (if !fcCPU then lB9);
+!Utvrdivanje broja ulaza!
+br (if !PRINS then lBC);
+IRPOMout3, ldBR, clPRINS, br lC5;
+lBC: br (if !PRCOD then lBE);
+UINTout3, ldBR, clPRCOD, br lC5;
+lBE: br (if !PRADR then lC0);
+UINTout3, ldBR, clPRADR, br lC5;
+lC0: br (if !PRINM then lC2);
+UINTout3, ldBR, clPRINM, br lC5;
+lC2: br (if !printr then lC4);
+UEXTout3, ldBR, clINTR, ldL, br lC5;
+lC4: UINTout3, ldBR;
+!Utvrdivanje adrese prekidne rutine!
+lC5: IVTPout1, IVTDSPout3, ADDout2, ldMAR;
+lC7: eMAR, rdCPU, br (if !fcCPU then lC7);
+MDRout1, ldDWL, incMAR;
+lCA: eMAR, rdCPU, br (if !fcCPU then lCA);
+MDRout1, ldDWH;
+DWout2,ldPC,clPSWI,clPSWT, br l0;
